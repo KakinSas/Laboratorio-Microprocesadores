@@ -10,6 +10,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
+import seaborn as sns
 import joblib
 
 # ===============================

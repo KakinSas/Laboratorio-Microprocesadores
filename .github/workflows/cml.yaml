@@ -24,13 +24,13 @@ jobs:
       run: python train.py
       
     - name: Upload plot
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: temperature-prediction-plot
         path: prediction_plot.png
 
     - name: Upload model
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: random-forest-model
         path: random_forest_model.pkl

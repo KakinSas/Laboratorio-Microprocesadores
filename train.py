@@ -134,7 +134,7 @@ plt.legend()
 plt.savefig("grafico_real_vs_predicho.png")
 plt.close()
 # ===============================
-#   Guardar Modelo Entrenado
+#   Guardar Modelo Entrenado 1
 # ===============================
 joblib.dump(model, "random_forest_model.pkl")
 

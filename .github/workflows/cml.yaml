@@ -26,5 +26,11 @@ jobs:
     - name: Upload plot
       uses: actions/upload-artifact@v3
       with:
-        name: clusters-plot
-        path: clusters_plot.png
+        name: temperature-prediction-plot
+        path: prediction_plot.png
+
+    - name: Upload model
+      uses: actions/upload-artifact@v3
+      with:
+        name: random-forest-model
+        path: random_forest_model.pkl

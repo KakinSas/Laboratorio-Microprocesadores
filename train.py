@@ -1,98 +1,106 @@
-#librerias 
-
-import pandas as pd 
+# ================
+#   LIBRERÍAS
+# ================
+import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
-import datetime as dt
-import scipy.stats
-import statsmodels.formula.api as sm
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
-from mpl_toolkits.mplot3d import Axes3D 
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+import joblib
 
-#datasets 
-#dataset1=csv_egresos.csv= data1.csv 
-cat_dataset = pd.read_csv('data1.csv', sep =';', encoding='latin1')
-#dataset2=Delitos_CSV.csv = data2.csv 
-cat_MINPUB = pd.read_csv('data2.csv', sep =';', encoding='latin1')
-df_del =pd.read_csv('data2.csv', sep =';')
-#dataset3=Egresos_gendarmeria.csv= data3.csv
-df_egr = pd.read_csv('data3.csv', sep =';', encoding='latin1')
-df_fin = pd.merge(df_del, df_egr, on ='COD_DELITO')
+# ===============================
+#   Cargar dataset temperatura
+# ===============================
+df = pd.read_csv('data.csv')
 
+# Eliminamos columna innecesaria si existe
+if 'Unnamed: 0' in df.columns:
+    df = df.drop(columns=['Unnamed: 0'])
 
-df_fin.columns
-df_fin.info()
-df_fin2 = df_fin
-df_final = df_fin2.drop_duplicates()
+# -----------------------------------------------------------------------------
+# IMPUTACIÓN DE NULOS
+# Numéricas → Interpolación lineal
+# Categóricas → Moda (valor más frecuente)
+# -----------------------------------------------------------------------------
 
-df_final["COD_PERS"].value_counts()
-df_final.groupby(['MES_EGRESO', 'COD_PERS','Codigo', 'COD_DELITO'])['SCORE'].sum()
-df_fin2.isnull().sum()
-df_fin2.nunique()
-df_fin2['COD_DELITO'].unique()
-df_fin2['MES_EGRESO'].unique()
+# Detectar columnas numéricas y categóricas
+numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns
+categorical_cols = df.select_dtypes(include=['object']).columns
 
-df_fin2['MES_EGRESO'].value_counts()
-df_fin2['MES_EGRESO'] = df_fin2['MES_EGRESO'].astype(str)
-df_fin2.groupby(['MES_EGRESO'])['SCORE'].sum()
+# Interpolación numérica
+df[numeric_cols] = df[numeric_cols].interpolate(method='linear', limit_direction='both')
 
-score = df_fin2.groupby(['MES_EGRESO','COD_PERS']).agg({'SCORE': lambda x: x.sum()})
-score.reset_index(inplace=True)
+# Imputación categórica con moda
+for col in categorical_cols:
+    df[col] = df[col].fillna(df[col].mode()[0])
 
-col =['COD_PERS', 'MES_EGRESO', 'SCORE', 'COD_DELITO','Codigo']
-rfm = df_fin2[col]
+# ===============================
+#   Definir X (features) y y (target)
+# ===============================
+y = df['maxtemp']  # Target = temperatura máxima
+X = df.drop(columns=['maxtemp'])  # Features
 
-rfm['MES_EGRESO'] = pd.to_datetime(rfm['MES_EGRESO'],errors ='coerce')
-rfm['MES_EGRESO'].max()
-f_corte = dt.datetime(2022,7,1)
-rfm = rfm.drop_duplicates()
-RFM1 = rfm.groupby('COD_PERS').agg({'MES_EGRESO': lambda x: (f_corte - x.max()).days})
-RFM1['Frecuencia'] = (rfm.groupby(by=['COD_PERS'])['Codigo'].count()).astype(float)
-RFM1['ScoreTotal'] = rfm.groupby(by=['COD_PERS']).agg({'SCORE': 'sum'})
+# ===============================
+#   ONE HOT ENCODER para variables categóricas
+# ===============================
+cat_cols = [col for col in X.columns if X[col].dtype == "object"]
+num_cols = [col for col in X.columns if col not in cat_cols]
 
-RFM1.rename(columns={'MES_EGRESO': 'Egreso más reciente'}, inplace=True)
+# Preprocesador
+preprocess = ColumnTransformer(
+    transformers=[
+        ('cat', OneHotEncoder(handle_unknown='ignore'), cat_cols),
+        ('num', 'passthrough', num_cols)
+    ]
+)
 
-RFM1[RFM1['Egreso más reciente'] == 0]
-RFM1[RFM1['Frecuencia'] == 0]
-RFM1[RFM1['ScoreTotal'] == 0]
-RFM1 = RFM1[RFM1['Egreso más reciente'] > 0]
-RFM1.reset_index(drop=True,inplace=True)
-RFM1 = RFM1[RFM1['Frecuencia'] > 0]
-RFM1.reset_index(drop=True,inplace=True)
-RFM1 = RFM1[RFM1['ScoreTotal'] > 0]
-RFM1.reset_index(drop=True,inplace=True)
+# ===============================
+#   MODELO RANDOM FOREST + PIPELINE
+# ===============================
+model = Pipeline(steps=[
+    ('preprocess', preprocess),
+    ('rf', RandomForestRegressor(n_estimators=250, random_state=42))
+])
 
-Data_RFM1 = RFM1[['Egreso más reciente','Frecuencia','ScoreTotal']]
+# ===============================
+#   Train-Test Split
+# ===============================
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=42)
 
-data_log = np.log(Data_RFM1)
-scaler = StandardScaler()
-scaler.fit(data_log)
-data_sc = scaler.transform(data_log)
-df_norm = pd.DataFrame(data_sc, columns=Data_RFM1.columns)
+# ===============================
+#   ENTRENAR MODELO
+# ===============================
+model.fit(X_train, y_train)
 
+# ===============================
+#   Predicciones y Métricas
+# ===============================
+y_pred = model.predict(X_test)
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
 
-#plots 
-def plots_model():    
-    fig = plt.figure(figsize=(10, 7))
-    ax = fig.add_subplot(111, projection='3d')
-    
-    for x in RFM1.grupos.unique():        
-        xs = RFM1[RFM1.grupos == x]['Egreso más reciente']
-        zs = RFM1[RFM1.grupos == x]['Frecuencia']
-        ys = RFM1[RFM1.grupos == x]['ScoreTotal']
-        ax.scatter(xs, ys, zs, s=50, alpha=0.6, edgecolors='w', label = x)
+print(f"MSE: {mse:.2f}")
+print(f"R2 Score: {r2:.3f}")
 
-    plt.legend()
-    plt.title('Clusters del Modelo KMeans')
-    plt.savefig('clusters_plot.png')  # Guardar el gráfico como un archivo PNG
+# ===============================
+#   GRÁFICO DE RESULTADOS
+# ===============================
+plt.figure(figsize=(7,5))
+plt.scatter(y_test, y_pred, alpha=0.7, edgecolor='k')
+plt.xlabel("Temperatura Real")
+plt.ylabel("Temperatura Predicha")
+plt.title(f"Predicción RF Temp - MSE: {mse:.2f} | R2: {r2:.3f}")
+plt.grid(True)
+plt.savefig("prediction_plot.png")  # 📌 artefacto CML
 
+# ===============================
+#   Guardar Modelo Entrenado
+# ===============================
+joblib.dump(model, "random_forest_model.pkl")
 
-model = KMeans(n_clusters=4, init='k-means++', max_iter=301)
-grupos = model.fit_predict(df_norm)
-df_norm['grupos'] = grupos
-RFM1['grupos'] = grupos
-plots_model()
-plt.show()
-# segundo push
+print("Modelo guardado como random_forest_model.pkl")
+print("Gráfico guardado como prediction_plot.png")

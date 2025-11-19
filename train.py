@@ -93,26 +93,32 @@ print(f"R2 Score: {r2:.3f}")
 
 # === 1️⃣ Histograma de temperatura ===
 plt.figure(figsize=(6,4))
-sns.histplot(df['temperatura'], kde=True, color='orange')
-plt.title("Distribución de Temperatura")
-plt.xlabel("Temperatura")
+sns.histplot(df['maxtemp'], kde=True, color='orange')
+plt.title("Distribución de Temperatura Máxima")
+plt.xlabel("Temperatura Máxima")
 plt.ylabel("Frecuencia")
-plt.savefig("grafico_histograma_temp.png")
+plt.savefig("grafico_histograma_maxtemp.png")
 plt.close()
 
 # === 2️⃣ Línea de evolución de temperatura ===
 plt.figure(figsize=(7,4))
-plt.plot(df['temperatura'].values, label="Temperatura", color='red')
-plt.title("Temperatura a lo largo del tiempo")
+plt.plot(df['maxtemp'].values, label="Temp Máx", color='red')
+plt.title("Temperatura Máxima a lo largo del tiempo")
 plt.xlabel("Tiempo (index)")
-plt.ylabel("Temperatura")
+plt.ylabel("Temperatura Máxima")
 plt.legend()
-plt.savefig("grafico_linea_tiempo.png")
+plt.savefig("grafico_linea_tiempo_maxtemp.png")
 plt.close()
 
 # === 3️⃣ Importancia de variables ===
-plt.figure(figsize=(5,4))
-sns.barplot(x=model.feature_importances_, y=['Humedad'], palette="viridis")
+# ⚠️ Dado que usas Pipeline, la importancia está en model['rf'], no en model directo
+importances = model.named_steps['rf'].feature_importances_
+feature_names = (list(model.named_steps['preprocess']
+                       .transformers_[0][1].get_feature_names_out(cat_cols))
+                 + num_cols)
+
+plt.figure(figsize=(10,6))
+sns.barplot(x=importances, y=feature_names, palette="viridis")
 plt.title("Importancia de Variables en Random Forest")
 plt.savefig("grafico_importancia_variables.png")
 plt.close()
@@ -121,13 +127,12 @@ plt.close()
 plt.figure(figsize=(7,5))
 plt.scatter(y_test, y_pred, alpha=0.7, c='blue', label="Predicciones")
 plt.scatter(y_test, y_test, alpha=0.4, c='red', label="Valores Reales")
-plt.xlabel("Real")
-plt.ylabel("Predicho")
-plt.title("Comparación Temperatura Real vs Predicha")
+plt.xlabel("Real Temp Máx")
+plt.ylabel("Predicho Temp Máx")
+plt.title("Comparación Temp Máx Real vs Predicha")
 plt.legend()
 plt.savefig("grafico_real_vs_predicho.png")
 plt.close()
-
 # ===============================
 #   Guardar Modelo Entrenado
 # ===============================

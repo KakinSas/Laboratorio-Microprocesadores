@@ -1,0 +1,12 @@
+﻿{
+  "repositoryName": "KakinSas/Laboratorio-Microprocesadores",
+  "pipelineDirectory": "Laboratorio-Microprocesadores",
+  "workspaceDirectory": "Laboratorio-Microprocesadores\\Laboratorio-Microprocesadores",
+  "repositories": {
+    "KakinSas/Laboratorio-Microprocesadores": {
+      "repositoryPath": "Laboratorio-Microprocesadores\\Laboratorio-Microprocesadores",
+      "lastRunOn": "11/19/2025 12:14:41 -03:00"
+    }
+  },
+  "lastRunOn": "11/19/2025 12:14:41 -03:00"
+}

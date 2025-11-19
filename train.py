@@ -86,25 +86,46 @@ r2 = r2_score(y_test, y_pred)
 print(f"MSE: {mse:.2f}")
 print(f"R2 Score: {r2:.3f}")
 
-# ===============================
-#   GRÁFICO DE RESULTADOS
-# ===============================
-plt.figure(figsize=(7,5))
+# =============================
+#   📈 GRAFICOS
+# =============================
 
-# Puntos reales vs predichos
-plt.scatter(y_test, y_pred, alpha=0.7, edgecolor='k', label='Predicciones')
+# === 1️⃣ Histograma de temperatura ===
+plt.figure(figsize=(6,4))
+sns.histplot(df['temperatura'], kde=True, color='orange')
+plt.title("Distribución de Temperatura")
+plt.xlabel("Temperatura")
+plt.ylabel("Frecuencia")
+plt.savefig("grafico_histograma_temp.png")
+plt.close()
 
-# Línea ideal (si el modelo fuera perfecto)
-min_val = min(min(y_test), min(y_pred))
-max_val = max(max(y_test), max(y_pred))
-plt.plot([min_val, max_val], [min_val, max_val], 'r--', label='Real = Predicho')
-
-plt.xlabel("Temperatura Real")
-plt.ylabel("Temperatura Predicha")
-plt.title(f"Predicción RF Temp - MSE: {mse:.2f} | R2: {r2:.3f}")
+# === 2️⃣ Línea de evolución de temperatura ===
+plt.figure(figsize=(7,4))
+plt.plot(df['temperatura'].values, label="Temperatura", color='red')
+plt.title("Temperatura a lo largo del tiempo")
+plt.xlabel("Tiempo (index)")
+plt.ylabel("Temperatura")
 plt.legend()
-plt.grid(True)
-plt.savefig("prediction_plot.png")
+plt.savefig("grafico_linea_tiempo.png")
+plt.close()
+
+# === 3️⃣ Importancia de variables ===
+plt.figure(figsize=(5,4))
+sns.barplot(x=model.feature_importances_, y=['Humedad'], palette="viridis")
+plt.title("Importancia de Variables en Random Forest")
+plt.savefig("grafico_importancia_variables.png")
+plt.close()
+
+# === 4️⃣ Real vs Predicho COLOR + LEYENDA ===
+plt.figure(figsize=(7,5))
+plt.scatter(y_test, y_pred, alpha=0.7, c='blue', label="Predicciones")
+plt.scatter(y_test, y_test, alpha=0.4, c='red', label="Valores Reales")
+plt.xlabel("Real")
+plt.ylabel("Predicho")
+plt.title("Comparación Temperatura Real vs Predicha")
+plt.legend()
+plt.savefig("grafico_real_vs_predicho.png")
+plt.close()
 
 # ===============================
 #   Guardar Modelo Entrenado

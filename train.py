@@ -90,12 +90,21 @@ print(f"R2 Score: {r2:.3f}")
 #   GRÁFICO DE RESULTADOS
 # ===============================
 plt.figure(figsize=(7,5))
-plt.scatter(y_test, y_pred, alpha=0.7, edgecolor='k')
+
+# Puntos reales vs predichos
+plt.scatter(y_test, y_pred, alpha=0.7, edgecolor='k', label='Predicciones')
+
+# Línea ideal (si el modelo fuera perfecto)
+min_val = min(min(y_test), min(y_pred))
+max_val = max(max(y_test), max(y_pred))
+plt.plot([min_val, max_val], [min_val, max_val], 'r--', label='Real = Predicho')
+
 plt.xlabel("Temperatura Real")
 plt.ylabel("Temperatura Predicha")
 plt.title(f"Predicción RF Temp - MSE: {mse:.2f} | R2: {r2:.3f}")
+plt.legend()
 plt.grid(True)
-plt.savefig("prediction_plot.png")  # 📌 artefacto CML
+plt.savefig("prediction_plot.png")
 
 # ===============================
 #   Guardar Modelo Entrenado

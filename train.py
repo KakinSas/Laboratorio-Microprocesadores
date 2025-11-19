@@ -95,3 +95,4 @@ df_norm['grupos'] = grupos
 RFM1['grupos'] = grupos
 plots_model()
 plt.show()
+# segundo push
